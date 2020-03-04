@@ -4,6 +4,7 @@ const BaseManager = require('./BaseManager');
 const Message = require('../structures/Message');
 const Collection = require('../util/Collection');
 const LimitedCollection = require('../util/LimitedCollection');
+const { Error } = require('../errors');
 
 /**
  * Manages API methods for Messages and holds their cache.
@@ -85,6 +86,25 @@ class MessageManager extends BaseManager {
       return messages;
     });
   }
+
+  async _fetchId(messageID) {
+    if (!this.client.user.bot) {
+      const messages = await this._fetchMany({ limit: 1, around: messageID });
+      const msg = messages.get(messageID);
+      if (!msg) throw new Error('MESSAGE_MISSING');
+      return msg;
+    }
+    const data = await this.client.api.channels[this.channel.id].messages[messageID].get();
+    return this.add(data);
+  }
+
+  async _fetchMany(options = {}) {
+    const data = await this.client.api.channels[this.channel.id].messages.get({ query: options });
+    const messages = new Collection();
+    for (const message of data) messages.set(message.id, this.add(message));
+    return messages;
+  }
+
 
   /**
    * Data that can be resolved to a Message object. This can be:

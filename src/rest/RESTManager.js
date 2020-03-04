@@ -27,7 +27,7 @@ class RESTManager {
 
   getAuth() {
     const token = this.client.token || this.client.accessToken;
-    const prefixed = !!this.client.application || this.client.user;
+    const prefixed = !!this.client.application || (this.client.user && this.client.user.bot);
     if (token && prefixed) return `${this.tokenPrefix} ${token}`;
     else if (token) return token;
     throw new Error('TOKEN_MISSING');
